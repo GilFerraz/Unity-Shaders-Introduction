@@ -1,4 +1,4 @@
-﻿Shader "Faxime/1. Color"
+﻿Shader "Faxime/Introduction/1. Color"
 {
 	Properties
 	{
@@ -19,7 +19,7 @@
 			#pragma fragment fragment
 
 			// =============================================================================
-			// Includes
+			// Include Directives
 			// =============================================================================
 
 			#include "UnityCG.cginc"

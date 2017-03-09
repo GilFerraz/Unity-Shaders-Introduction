@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
+﻿Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
 {
 	Properties
 	{

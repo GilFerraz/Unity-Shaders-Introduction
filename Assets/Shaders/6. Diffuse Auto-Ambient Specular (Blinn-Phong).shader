@@ -1,8 +1,9 @@
-﻿Shader "Faxime/Introduction/4. Diffuse Auto-Ambient"
+﻿Shader "Faxime/Introduction/6. Diffuse Auto-Ambient Specular (Blinn-Phong)"
 {
 	Properties
 	{
 		_DiffuseColor("Diffuse Color", Color) = (1.0, 1.0, 1.0, 1.0)
+		_SpecularColor("Specular Color", Color) = (1.0, 1.0, 1.0, 1.0)
 	}
 
 	SubShader
@@ -10,17 +11,9 @@
 		Pass
 		{
 			CGPROGRAM
-									
-			// =============================================================================
-			// Pragma Directives
-			// =============================================================================
 
-			#pragma vertex mainVertex
-			#pragma fragment mainFrag
-						
-			// =============================================================================
-			// Include Directives
-			// =============================================================================
+			#pragma vertex vertex
+			#pragma fragment fragment
 
 			#include "UnityCG.cginc"
 
@@ -29,6 +22,7 @@
 			// =============================================================================
 
 			uniform float4 _DiffuseColor;
+			uniform float4 _SpecularColor;
 
 			// =============================================================================
 			// Structures
@@ -50,32 +44,38 @@
 			// Vertex Function
 			// =============================================================================
 
-			vertexOutput mainVertex(vertexInput input)
+			vertexOutput vertex(vertexInput input)
 			{
 				vertexOutput output;
+				float specularIntensity = 0.0;
 
-				// Calculates the vetex's ambient color, based on its diffuse color.
-				float4 ambientColor = _DiffuseColor * 0.2;
-
-				// Calculates the light's direction and the vertex's objects surface normal.
+				// Calculates the light's direction.
 				float3 lightDirection = normalize(-_WorldSpaceLightPos0.xyz);
+
+				// Calculates the vertex's objects surface normal.
 				float3 surfaceNormal = normalize(mul(float4(input.Normal, 0.0), unity_WorldToObject).xyz);
 
 				// Calculates the vertex's light intensity.
 				float intensity = dot(surfaceNormal, lightDirection);
 
+				// Calculates the vetex's ambient color, based on its diffuse color.
+				float4 ambientColor = _DiffuseColor * 0.2;
+
+				if (intensity > 0)
+				{
+					// Calculates the camera's view direction to the vertex.
+					float3 viewDirection = normalize(mul(unity_ObjectToWorld, input.Vertex).xyz - _WorldSpaceCameraPos);
+
+					// Calculates the half vector between the light vector and the view vector.
+					float3 h = normalize(lightDirection + viewDirection);
+
+					//Intensity of the specular light
+					specularIntensity =  max(dot(surfaceNormal, h), 0.0);
+				}
+				
+				output.Color = max(_DiffuseColor*intensity + _SpecularColor * specularIntensity, ambientColor);
+
 				output.Position = mul(UNITY_MATRIX_MVP, input.Vertex);
-
-				//if (intensity > 0)
-				//{
-				//	output.col = float4(_DiffuseColor.xyz*intensity, 1.0F);
-				//}
-				//else
-				//{
-				//	output.col = float4(ambientColor.xyz, 1.0F);
-				//}
-
-				output.Color = max(_DiffuseColor*intensity, ambientColor);
 
 				return output;
 			}
@@ -84,7 +84,7 @@
 			// Fragment Function
 			// =============================================================================
 
-			float4 mainFrag(vertexOutput input) : COLOR
+			float4 fragment(vertexOutput input) : COLOR
 			{
 				return input.Color;
 			}

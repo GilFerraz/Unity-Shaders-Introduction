@@ -1,11 +1,9 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
+﻿Shader "Faxime/Introduction/5. Diffuse Auto-Ambient Specular (Phong)"
 {
 	Properties
 	{
-		_DiffuseColor("Diffuse Color", Color) = (1,1,1,1)
-		_SpecularColor("Specular Color", Color) = (1,1,1,1)
+		_DiffuseColor("Diffuse Color", Color) = (1.0, 1.0, 1.0, 1.0)
+		_SpecularColor("Specular Color", Color) = (1.0, 1.0, 1.0, 1.0)
 	}
 
 	SubShader
@@ -14,8 +12,8 @@ Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
 		{
 			CGPROGRAM
 
-			#pragma vertex mainVertex
-			#pragma fragment mainFrag
+			#pragma vertex vertex
+			#pragma fragment fragment
 
 			#include "UnityCG.cginc"
 
@@ -32,42 +30,49 @@ Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
 	
 			struct vertexInput 
 			{
-				float4 vertex : POSITION;
-				float3 normal : NORMAL;
+				float4 Vertex : POSITION;
+				float3 Normal : NORMAL;
 			};
 
 			struct vertexOutput
 			{
-				float4 pos : SV_POSITION;
-				float4 col : COLOR;
+				float4 Position : SV_POSITION;
+				float4 Color : COLOR;
 			};
 
 			// =============================================================================
 			// Vertex Function
 			// =============================================================================
 
-			vertexOutput mainVertex(vertexInput input)
+			vertexOutput vertex(vertexInput input)
 			{
 				vertexOutput output;
+				float specularIntensity = 0.0;
 
-				//direção da luz
+				// Calculates the light's direction.
 				float3 lightDirection = normalize(-_WorldSpaceLightPos0.xyz);
-				float3 surfaceNormal = normalize(mul(float4(input.normal, 0.0), unity_WorldToObject).xyz);
 
+				// Calculates the vertex's objects surface normal.
+				float3 surfaceNormal = normalize(mul(float4(input.Normal, 0.0), unity_WorldToObject).xyz);
+
+				// Calculates the vertex's light intensity.
 				float intensity = dot(surfaceNormal, lightDirection);
-				float4 ambientColor = _DiffuseColor*0.2;
 
-				output.pos = mul(UNITY_MATRIX_MVP, input.vertex);
+				// Calculates the vetex's ambient color, based on its diffuse color.
+				float4 ambientColor = _DiffuseColor * 0.2;
 
-				float iSpec = 0;
 				if (intensity > 0)
 				{
-					float3 reflectionDirection = -2*dot(surfaceNormal, lightDirection)*surfaceNormal + lightDirection;
-					float3 eye = normalize(mul(unity_ObjectToWorld, input.vertex).xyz - _WorldSpaceCameraPos);
-					iSpec = max(dot(reflectionDirection, eye), 0.0);
+					float3 reflectionDirection = -2.0 * dot(surfaceNormal, lightDirection) * surfaceNormal + lightDirection;
+					
+					float3 eye = normalize(mul(unity_ObjectToWorld, input.Vertex).xyz - _WorldSpaceCameraPos);
+
+					specularIntensity = max(dot(reflectionDirection, eye), 0.0);
 				}
 				
-				output.col = max(_DiffuseColor*intensity + _SpecularColor*iSpec, ambientColor);
+				output.Color = max(_DiffuseColor*intensity + _SpecularColor * specularIntensity, ambientColor);
+
+				output.Position = mul(UNITY_MATRIX_MVP, input.Vertex);
 
 				return output;
 			}
@@ -76,9 +81,9 @@ Shader "Faxime/5. Diffuse Auto-Ambient Specular (Phong)"
 			// Fragment Function
 			// =============================================================================
 
-			float4 mainFrag(vertexOutput input) : COLOR
+			float4 fragment(vertexOutput input) : COLOR
 			{
-				return input.col;
+				return input.Color;
 			}
 
 			ENDCG
