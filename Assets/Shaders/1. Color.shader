@@ -1,4 +1,4 @@
-﻿Shader "Faxime/1. Color"
+﻿Shader "Faxime/Introduction/1. Color"
 {
 	Properties
 	{
@@ -19,7 +19,7 @@
 			#pragma fragment fragment
 
 			// =============================================================================
-			// Includes
+			// Include Directives
 			// =============================================================================
 
 			#include "UnityCG.cginc"
@@ -36,12 +36,12 @@
 
 			struct vertexInput 
 			{
-				float4 vertex : POSITION;
+				float4 Vertex : POSITION;
 			};
 
 			struct vertexOutput
 			{
-				float4 pos : SV_POSITION;
+				float4 Position : SV_POSITION;
 			};
 
 			// =============================================================================
@@ -52,7 +52,8 @@
 			{
 				vertexOutput output;
 
-				output.pos = mul(UNITY_MATRIX_MVP, input.vertex);
+				// Transforms the vertex position from object space to world space.
+				output.Position = mul(UNITY_MATRIX_MVP, input.Vertex);
 				
 				return output;
 			}
