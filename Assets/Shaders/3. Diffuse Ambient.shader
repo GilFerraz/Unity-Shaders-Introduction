@@ -56,14 +56,18 @@
 			{
 				vertexOutput output;
 
-				// Calculates the light's direction and the objects's surface normal.
-				float3 lightDirection = normalize(-_WorldSpaceLightPos0.xyz);
-				float3 surfaceNormal = normalize(mul(float4(input.Normal, 0.0), unity_WorldToObject).xyz);
-
-				// Calculates the light's intensity on a vertex.
-				float intensity = dot(surfaceNormal, lightDirection);
-
+				// Transforms the vertex position from object space to world space.
 				output.Position = mul(UNITY_MATRIX_MVP, input.Vertex);
+
+				// Calculates the light's direction in world space.
+				float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+				
+				// Calculates the vertex's surface normal in object space.
+				float3 normal = normalize(mul(float4(input.Normal, 0.0), unity_WorldToObject).xyz);
+
+				// Calculates the light's intensity on the vertex.
+				float intensity = dot(normal, lightDirection);
+
 				output.Color = max(float4(_DiffuseColor.xyz * intensity, 1.0), float4(_AmbientColor.xyz, 1.0));
 
 				return output;
