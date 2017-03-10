@@ -1,13 +1,13 @@
-﻿Shader "Faxime/Introduction/11. Diffuse Ambient Specular Pixel Multi-Texture (Blinn-Phong)"
+﻿Shader "Faxime/Introduction/13. Diffuse Ambient Specular Pixel Texture Reflection (Blinn-Phong)"
 {
 	Properties
 	{
-		_Texture0 ("Texture 0", 2D) = "white" {}
-		_Texture1 ("Texture 1", 2D) = "white" {}
+		_MainTexture("Texture", 2D) = "white" {}
+		_Cubemap ("Reflection Map", Cube) = "white" {}
 
 		_DiffuseColor("Diffuse Color", Color) = (1.0, 1.0, 1.0, 1.0)
 		_SpecularColor("Specular Color", Color) = (1.0, 1.0, 1.0, 1.0)
-		_SpecularStrength("Shininess", Range(1.0, 256.0)) = 1.0
+		_SpecularStrength("Shininess", Range(1.0, 256.0)) = 0.5
 	}
 
 	SubShader
@@ -34,13 +34,13 @@
 			// Uniform Variables
 			// =============================================================================
 
-			uniform sampler2D _Texture0;
-			uniform sampler2D _Texture1;
+			uniform sampler2D _MainTexture;
+			uniform samplerCUBE _Cubemap;
 
 			uniform float4 _DiffuseColor;
 			uniform float4 _SpecularColor;
 			uniform float _SpecularStrength;
-													
+															
 			// =============================================================================
 			// Constants
 			// =============================================================================
@@ -83,7 +83,7 @@
 				output.Normal = normalize(mul(float4(input.Normal, 0.0), unity_WorldToObject).xyz);
 
 				// Calculates the camera's view direction to the vertex.
-				output.ViewDirection = normalize(_WorldSpaceCameraPos - mul(unity_ObjectToWorld, input.Vertex).xyz);
+				output.ViewDirection = normalize(mul(unity_ObjectToWorld, input.Vertex).xyz - _WorldSpaceCameraPos);
 
 				return output;
 			}
@@ -108,35 +108,29 @@
 				if (intensity > 0) 
 				{
 					// Calculates the half vector between the light vector and the view vector.
-					float3 h = normalize(lightDirection + viewDirection);
+					float3 h = normalize(lightDirection - viewDirection);
 
 					// Calculates the specular intensity, based on the reflection direction and view direction.
 					specularIntensity =  pow(max(dot(normal, h), 0.0), _SpecularStrength);
 				}
 
-				float4 textureColor = float4(0.0, 0.0, 0.0, 1.0);
+				// Calculates the reflection's direction, based on the view direction and the surface normal.
+				float3 reflectionDirection = reflect(viewDirection, normal);
 
-				//if (input.UV.x > 0.5)
-				//if (intensity > 0)
-				//{
-				//	textureColor = tex2D(_Texture0, input.UV);
-				//}
-				//else
-				//{
-				//	textureColor = tex2D(_Texture1, input.UV);
-				//}
-
-				// Gets the color of the texture on the current UV coordinates, based on the light's intensity.
-				textureColor = lerp(tex2D(_Texture1, input.UV), tex2D(_Texture0, input.UV), intensity);
+				// Gets the color of the texture on the current UV coordinates.
+				float4 textureColor = tex2D(_MainTexture, input.UV);
+				// Gets the color of the cube texture on the current reflection coordinates.
+				float4 reflectionColor = texCUBE(_Cubemap, reflectionDirection);
 
 				// Applies a tint to the texture color, based on the passed Diffuse Color.
 				fixed4 textureTint = textureColor * _DiffuseColor;
+				// Applies a tint to the reflection color, based on the passed Specular Color.
+				fixed4 reflectionTint = reflectionColor * _SpecularColor;
 
 				// Calculates the vetex's ambient color, based on its texture tint color.
 				fixed4 ambientColor = textureTint * AmbientFactor;
 
-				return max(textureTint * intensity + _SpecularColor * specularIntensity, ambientColor);
-
+				return max(textureTint * intensity + reflectionTint * specularIntensity, ambientColor);
 			}
 		
 			ENDCG

@@ -2,7 +2,7 @@
 {
 	Properties
 	{
-		_Cubemap ("Cubemap", Cube) = "white" {}
+		_Cubemap ("Reflection Map", Cube) = "white" {}
 		_DiffuseColor("Diffuse Color", Color) = (1.0, 1.0, 1.0, 1.0)
 		_SpecularColor("Specular Color", Color) = (1.0, 1.0, 1.0, 1.0)
 		_SpecularStrength("Shininess", Range(1.0, 256.0)) = 0.5
@@ -104,14 +104,14 @@
 				if (intensity > 0) 
 				{
 					// Calculates the half vector between the light vector and the view vector.
-					float3 h = normalize(lightDirection + viewDirection);
+					float3 h = normalize(lightDirection - viewDirection);
 
 					// Calculates the specular intensity, based on the reflection direction and view direction.
 					specularIntensity =  pow(max(dot(normal, h), 0.0), _SpecularStrength);
 				}
 
 				// Calculates the reflection's direction, based on the view direction and the surface normal.
-				float3 reflectionDirection = reflect(input.ViewDirection, normal);
+				float3 reflectionDirection = reflect(viewDirection, normal);
 
 				// Gets the color of the cube texture on the current reflection coordinates.
 				float4 textureColor = texCUBE(_Cubemap, reflectionDirection);
